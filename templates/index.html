@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberGuard - Network Scanner & Security Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            dark: '#0a0d14',
+                            card: '#111625',
+                            border: '#1f293d',
+                            accent: '#00f0ff',
+                            green: '#00ff88',
+                            purple: '#a855f7',
+                            red: '#ff3366',
+                            yellow: '#ffcc00'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #060910;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+        }
+        .glow-accent {
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
+        }
+        .cyber-border {
+            border: 1px solid #1f293d;
+            transition: all 0.3s ease;
+        }
+        .cyber-border:hover {
+            border-color: #00f0ff;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0d121f;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f0ff;
+        }
+        .pulse-dot {
+            box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7);
+            animation: pulse 1.6s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(0, 255, 136, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col md:flex-row bg-[#060910] text-slate-200 antialiased selection:bg-cyan-500 selection:text-black">
+
+    <!-- Sidebar -->
+    <aside class="w-full md:w-64 bg-[#0a0d14] border-r border-slate-800 flex flex-col shrink-0">
+        <div class="p-5 border-b border-slate-800/80 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="p-2.5 bg-cyan-950/60 border border-cyan-500/40 rounded-xl text-cyan-400 glow-accent">
+                    <i class="fa-solid fa-shield-halved text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg tracking-wide bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400 bg-clip-text text-transparent">CYBER<span class="text-white">GUARD</span></h1>
+                    <p class="text-[10px] text-slate-400 font-mono tracking-widest uppercase">NetScan v2.4.0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-5 py-3 border-b border-slate-800/50 bg-slate-900/30 flex items-center justify-between text-xs">
+            <span class="text-slate-400 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span> Core Status
+            </span>
+            <span class="font-mono text-emerald-400 font-medium">READY</span>
+        </div>
+
+        <nav class="p-4 space-y-1.5 flex-1">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm transition-all bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                <i class="fa-solid fa-chart-pie w-5"></i><span>Dashboard</span>
+            </button>
+            <button onclick="switchTab('discovery')" id="nav-discovery" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent transition-all">
+                <i class="fa-solid fa-network-wired w-5"></i><span>Network Discovery</span>
+            </button>
+            <button onclick="switchTab('scanner')" id="nav-scanner" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent transition-all">
+                <i class="fa-solid fa-terminal w-5"></i><span>Port Scanner</span>
+            </button>
+            <button onclick="switchTab('reports')" id="nav-reports" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent transition-all">
+                <i class="fa-solid fa-file-shield w-5"></i><span>Security Reports</span>
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800/80">
+            <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400 space-y-1">
+                <div class="flex justify-between font-mono text-[11px]">
+                    <span>Engine:</span>
+                    <span class="text-cyan-400">Scapy + Socket</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Shell -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        
+        <!-- Header with Profile and Logout -->
+        <header class="h-16 border-b border-slate-800 bg-[#0a0d14]/80 backdrop-blur sticky top-0 z-20 px-6 flex items-center justify-between">
+            <h2 id="page-title" class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-chart-pie text-cyan-400"></i> Dashboard Overview
+            </h2>
+            <div class="flex items-center space-x-4">
+                <div id="clock" class="text-xs font-mono font-semibold text-slate-300">12:00:00 UTC</div>
+                
+                <!-- Profile Button -->
+                <a href="/profile" class="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-cyan-400 hover:border-cyan-500 transition cursor-pointer">
+                    <i class="fa-solid fa-user-shield"></i> {{ username }}
+                </a>
+                
+                <!-- Logout Button -->
+                <a href="/logout" class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition text-xs" title="Logout">
+                    <i class="fa-solid fa-power-off"></i>
+                </a>
+            </div>
+        </header>
+
+        <div class="p-6 space-y-6 flex-1">
+
+            <!-- 1. DASHBOARD TAB -->
+            <div id="tab-dashboard" class="space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-[#111625] border border-slate-800/80 rounded-2xl p-5">
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Devices</span>
+                        <div id="stat-total-devices" class="text-3xl font-extrabold text-white font-mono mt-2">0</div>
+                    </div>
+                    <div class="bg-[#111625] border border-slate-800/80 rounded-2xl p-5">
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Scanned Ports</span>
+                        <div id="stat-scanned-ports" class="text-3xl font-extrabold text-white font-mono mt-2">0</div>
+                    </div>
+                    <div class="bg-[#111625] border border-slate-800/80 rounded-2xl p-5">
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Open Ports</span>
+                        <div id="stat-open-ports" class="text-3xl font-extrabold text-emerald-400 font-mono mt-2">0</div>
+                    </div>
+                    <div class="bg-[#111625] border border-slate-800/80 rounded-2xl p-5">
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Risk Level</span>
+                        <div id="stat-risk-level" class="text-3xl font-extrabold text-slate-500 font-mono mt-2">N/A</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-[#111625] border border-slate-800/80 rounded-2xl p-5 h-72">
+                        <h3 class="font-semibold text-slate-200 text-sm mb-4">Port Scanning Activity</h3>
+                        <div class="h-52 relative"><canvas id="activityChart"></canvas></div>
+                    </div>
+                    <div class="bg-[#111625] border border-slate-800/80 rounded-2xl p-5 h-72 flex flex-col items-center">
+                        <h3 class="font-semibold text-slate-200 text-sm mb-4 self-start">Risk Distribution</h3>
+                        <div class="h-44 relative w-full flex justify-center"><canvas id="riskChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. NETWORK DISCOVERY TAB -->
+            <div id="tab-discovery" class="space-y-6 hidden">
+                <div class="bg-[#111625] border border-slate-800/80 rounded-2xl p-5 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-slate-200 text-sm">Active Subnet Discovery (Scapy ARP)</h3>
+                        <button onclick="runDiscovery()" class="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-mono font-bold rounded-xl transition flex items-center gap-2">
+                            <i class="fa-solid fa-magnifying-glass"></i> Scan Network
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-800 text-[11px] font-mono uppercase text-slate-400 bg-slate-900/40">
+                                    <th class="p-3.5">IP Address</th>
+                                    <th class="p-3.5">MAC Address</th>
+                                    <th class="p-3.5">Hostname</th>
+                                    <th class="p-3.5">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="devices-table-body" class="text-xs font-mono divide-y divide-slate-800/50">
+                                <tr><td colspan="4" class="p-6 text-center text-slate-500">Click 'Scan Network' to discover active devices.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. PORT SCANNER TAB -->
+            <div id="tab-scanner" class="space-y-6 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-[#111625] border border-slate-800/80 rounded-2xl p-5 space-y-5">
+                        <h3 class="font-bold text-slate-200 text-sm border-b border-slate-800 pb-3">Target Configuration</h3>
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-mono text-slate-400">Target IP / Host</label>
+                            <input type="text" id="target-ip" value="127.0.0.1" class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs font-mono text-cyan-400 focus:outline-none focus:border-cyan-500">
+                        </div>
+                        <button onclick="startPortScan()" id="start-scan-btn" class="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-black font-bold text-sm tracking-wide transition shadow-lg">
+                            <i class="fa-solid fa-play"></i> START PORT SCAN
+                        </button>
+                    </div>
+
+                    <div class="lg:col-span-2 bg-black/90 border border-slate-800 rounded-2xl p-4 font-mono text-xs text-slate-300 h-72 flex flex-col">
+                        <div class="flex justify-between items-center pb-2 mb-2 border-b border-slate-800 text-[11px] text-slate-500">
+                            <span>Terminal Output</span>
+                            <button onclick="clearTerminal()">Clear</button>
+                        </div>
+                        <div id="terminal-log" class="flex-1 overflow-y-auto space-y-1">
+                            <p class="text-slate-500">> System ready for socket port scanning...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-[#111625] border border-slate-800/80 rounded-2xl p-5 space-y-3">
+                    <h3 class="font-bold text-slate-200 text-sm">Scan Results</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-800 text-[11px] font-mono uppercase text-slate-400 bg-slate-900/40">
+                                    <th class="p-3">Port</th>
+                                    <th class="p-3">State</th>
+                                    <th class="p-3">Service</th>
+                                    <th class="p-3">Banner</th>
+                                    <th class="p-3">Risk Level</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scan-results-body" class="text-xs font-mono divide-y divide-slate-800/50">
+                                <tr><td colspan="5" class="p-4 text-center text-slate-500">No scan results yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. SECURITY REPORTS TAB -->
+            <div id="tab-reports" class="space-y-6 hidden">
+                <div class="bg-[#111625] border border-slate-800/80 rounded-2xl p-5 space-y-6">
+                    <h3 class="font-bold text-slate-200 text-sm">Export Audit Findings</h3>
+                    <div class="flex flex-wrap gap-4">
+                        <button onclick="downloadReport('csv')" class="px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono text-cyan-400 hover:bg-slate-800 transition flex items-center gap-2">
+                            <i class="fa-solid fa-file-csv"></i> Download CSV Report
+                        </button>
+                        <button onclick="downloadReport('json')" class="px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono text-purple-400 hover:bg-slate-800 transition flex items-center gap-2">
+                            <i class="fa-solid fa-file-code"></i> Download JSON Report
+                        </button>
+                        <button onclick="downloadReport('txt')" class="px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono text-emerald-400 hover:bg-slate-800 transition flex items-center gap-2">
+                            <i class="fa-solid fa-file-lines"></i> Download Security TXT
+                        </button>
+                        <button onclick="downloadReport('pdf')" class="px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono text-rose-400 hover:bg-slate-800 transition flex items-center gap-2">
+                            <i class="fa-solid fa-file-pdf"></i> Download PDF Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        let riskChartInstance = null;
+        let activityChartInstance = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setInterval(() => {
+                document.getElementById('clock').innerText = new Date().toISOString().substring(11, 19) + ' UTC';
+            }, 1000);
+            initCharts();
+        });
+
+        function switchTab(tabName) {
+            ['dashboard', 'discovery', 'scanner', 'reports'].forEach(tab => {
+                document.getElementById(`tab-${tab}`).classList.add('hidden');
+                document.getElementById(`nav-${tab}`).className = "nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent transition-all";
+            });
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabName}`).className = "nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm transition-all bg-cyan-500/10 text-cyan-400 border border-cyan-500/30";
+        }
+
+        function initCharts() {
+            const ctxActivity = document.getElementById('activityChart').getContext('2d');
+            activityChartInstance = new Chart(ctxActivity, {
+                type: 'line',
+                data: {
+                    labels: ['12:00', '14:00', '16:00', '18:00', '20:00', 'Now'],
+                    datasets: [{ label: 'Ports Scanned', data: [0, 0, 0, 0, 0, 0], borderColor: '#00f0ff', fill: true, backgroundColor: 'rgba(0,240,255,0.05)' }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            const ctxRisk = document.getElementById('riskChart').getContext('2d');
+            riskChartInstance = new Chart(ctxRisk, {
+                type: 'doughnut',
+                data: {
+                    labels: ['High', 'Medium', 'Low'],
+                    datasets: [{ data: [0, 0, 0], backgroundColor: ['#ff3366', '#ffcc00', '#00ff88'], borderWidth: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', boxWidth: 12 } } } }
+            });
+        }
+
+        async function runDiscovery() {
+            const tbody = document.getElementById('devices-table-body');
+            tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-cyan-400 animate-pulse">Scanning local subnet packets via Scapy, please wait...</td></tr>`;
+            try {
+                const res = await fetch('/api/discover', { method: 'POST' });
+                const data = await res.json();
+                if(data.status === 'success') {
+                    tbody.innerHTML = '';
+                    if(data.devices.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-500">No active devices found.</td></tr>`;
+                        return;
+                    }
+                    data.devices.forEach(d => {
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-slate-900/60 transition">
+                                <td class="p-3.5 text-cyan-400 font-bold">${d.ip}</td>
+                                <td class="p-3.5 text-slate-400">${d.mac}</td>
+                                <td class="p-3.5 text-slate-200">${d.hostname}</td>
+                                <td class="p-3.5"><span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">ONLINE</span></td>
+                            </tr>
+                        `;
+                    });
+
+                    document.getElementById('stat-total-devices').innerText = data.devices.length;
+                }
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-rose-400">Error executing network discovery.</td></tr>`;
+            }
+        }
+
+        async function startPortScan() {
+            const target = document.getElementById('target-ip').value;
+            const logBox = document.getElementById('terminal-log');
+            const tableBody = document.getElementById('scan-results-body');
+            logBox.innerHTML = `<p class="text-cyan-400">> Initializing socket port scan on ${target}...</p>`;
+            tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-cyan-400 animate-pulse">Scanning ports...</td></tr>`;
+
+            try {
+                const res = await fetch('/api/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target: target })
+                });
+                const data = await res.json();
+
+                if(data.status === 'success') {
+                    logBox.innerHTML = '';
+                    data.logs.forEach(l => { logBox.innerHTML += `<p class="text-slate-300">> ${l}</p>`; });
+                    logBox.innerHTML += `<p class="text-emerald-400 font-bold">> Scan completed successfully!</p>`;
+                    
+                    document.getElementById('stat-scanned-ports').innerText = data.total_ports;
+                    document.getElementById('stat-open-ports').innerText = data.open_ports;
+                    
+                    let riskLevel = "LOW";
+                    let riskColor = "text-emerald-400";
+                    if(data.open_ports > 3) {
+                        riskLevel = "MEDIUM";
+                        riskColor = "text-amber-400";
+                    }
+                    if(data.open_ports > 7) {
+                        riskLevel = "HIGH";
+                        riskColor = "text-rose-400";
+                    }
+                    
+                    const riskEl = document.getElementById('stat-risk-level');
+                    riskEl.innerText = riskLevel;
+                    riskEl.className = `text-3xl font-extrabold ${riskColor} font-mono mt-2`;
+
+                    tableBody.innerHTML = `
+                        <tr class="hover:bg-slate-900/60 transition">
+                            <td class="p-3 text-cyan-400 font-bold">Multiple (${data.total_ports} ports)</td>
+                            <td class="p-3"><span class="text-emerald-400 font-semibold">COMPLETED</span></td>
+                            <td class="p-3 text-slate-200">Common Services</td>
+                            <td class="p-3 text-slate-400">Target: ${data.target} (${data.open_ports} Open Ports Found)</td>
+                            <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold">REVIEW</span></td>
+                        </tr>
+                    `;
+
+                    if (activityChartInstance) {
+                        activityChartInstance.data.datasets[0].data = [0, 0, 0, 0, 0, data.total_ports];
+                        activityChartInstance.update();
+                    }
+
+                    if (riskChartInstance) {
+                        const openCount = data.open_ports || 0;
+                        const highCount = openCount > 5 ? Math.floor(openCount / 2) : 0;
+                        const medCount = openCount > 0 ? openCount - highCount : 0;
+                        const lowCount = data.total_ports - openCount;
+
+                        riskChartInstance.data.datasets[0].data = [highCount, medCount, lowCount];
+                        riskChartInstance.update();
+                    }
+                }
+            } catch (err) {
+                logBox.innerHTML += `<p class="text-rose-400">> Error running port scan.</p>`;
+                tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-rose-400">Error executing scan.</td></tr>`;
+            }
+        }
+
+        function clearTerminal() {
+            document.getElementById('terminal-log').innerHTML = '';
+        }
+
+        function downloadReport(type) {
+            window.location.href = `/results/port_scan_results.${type}`;
+        }
+    </script>
+</body>
+</html>

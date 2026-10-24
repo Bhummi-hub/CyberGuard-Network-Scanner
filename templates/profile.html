@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberGuard - User Profile & Security Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #060910; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        .glow-accent { box-shadow: 0 0 25px rgba(0, 240, 255, 0.25); }
+        .glow-card { box-shadow: 0 10px 30px -10px rgba(0, 240, 255, 0.1); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-black">
+
+    <!-- Navbar -->
+    <header class="border-b border-slate-800 bg-[#0a0d14]/90 backdrop-blur sticky top-0 z-50 px-8 py-4 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="p-2.5 bg-cyan-950/60 border border-cyan-500/40 rounded-xl text-cyan-400 glow-accent">
+                <i class="fa-solid fa-shield-halved text-xl"></i>
+            </div>
+            <h1 class="font-bold text-xl tracking-wide bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">CYBER<span class="text-white">GUARD</span></h1>
+        </div>
+        <div class="flex items-center space-x-4">
+            <a href="/dashboard" class="px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono text-cyan-400 hover:bg-slate-800 transition flex items-center gap-2">
+                <i class="fa-solid fa-chart-pie"></i> Dashboard
+            </a>
+            <a href="/logout" class="px-4 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs font-mono text-rose-400 hover:bg-rose-500/20 transition flex items-center gap-2">
+                <i class="fa-solid fa-power-off"></i> Logout
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-5xl w-full mx-auto px-6 py-10 space-y-8">
+        
+        <!-- Top Profile Banner -->
+        <div class="bg-[#111625] border border-slate-800/80 rounded-2xl p-8 glow-card flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center space-x-5">
+                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-teal-500/20 border border-cyan-500/40 text-cyan-400 flex items-center justify-center text-4xl font-extrabold font-mono glow-accent">
+                    {{ user.username[0] | upper }}
+                </div>
+                <div>
+                    <div class="flex items-center gap-3">
+                        <h2 class="text-3xl font-extrabold text-white">{{ user.username }}</h2>
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">ACTIVE</span>
+                    </div>
+                    <p class="text-xs font-mono text-slate-400 mt-1">{{ user.bio if user.bio else 'Security Analyst & Network Auditor' }} &bull; ID: #CG-{{ user.id }}2026</p>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <a href="/dashboard" class="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs font-mono transition shadow-lg flex items-center gap-2">
+                    <i class="fa-solid fa-terminal"></i> Open Scanner
+                </a>
+            </div>
+        </div>
+
+        <!-- Account Settings & Credentials Section -->
+        <div class="bg-[#111625] border border-slate-800/80 rounded-2xl p-8 space-y-6">
+            <div class="border-b border-slate-800 pb-4">
+                <h3 class="font-bold text-white text-base flex items-center gap-2">
+                    <i class="fa-solid fa-user-gear text-cyan-400"></i> Edit Profile & Security Details
+                </h3>
+                <p class="text-xs text-slate-400 mt-1">Update your personal information, contact details, and password securely.</p>
+            </div>
+
+            <form id="profile-form" onsubmit="updateProfile(event)" class="space-y-5 max-w-2xl">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-mono text-slate-400">Username</label>
+                        <input type="text" id="username" value="{{ user.username }}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs font-mono text-cyan-400 focus:outline-none focus:border-cyan-500" required>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-mono text-slate-400">Email Address</label>
+                        <input type="email" id="email" value="{{ user.email if user.email else '' }}" placeholder="analyst@cyberguard.internal" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-mono text-slate-400">Phone Number</label>
+                        <input type="text" id="phone" value="{{ user.phone if user.phone else '' }}" placeholder="+1 (555) 019-2834" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-mono text-slate-400">New Password (leave blank to keep current)</label>
+                        <input type="password" id="password" placeholder="••••••••••••" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-500">
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-xs font-mono text-slate-400">Bio / Role Description</label>
+                    <input type="text" id="bio" value="{{ user.bio if user.bio else '' }}" placeholder="e.g. Senior Infrastructure Security Engineer" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-500">
+                </div>
+
+                <div class="pt-2 flex items-center gap-4">
+                    <button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-black font-bold text-xs font-mono transition shadow-lg">
+                        Save Profile Changes
+                    </button>
+                    <span id="response-msg" class="text-xs font-mono text-emerald-400 hidden"></span>
+                </div>
+            </form>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-500 font-mono">
+        CyberGuard NetScan v2.4.0 &bull; User Profile Management Center
+    </footer>
+
+    <script>
+        async function updateProfile(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const bio = document.getElementById('bio').value;
+            const password = document.getElementById('password').value;
+            const msgEl = document.getElementById('response-msg');
+
+            try {
+                const res = await fetch('/update-profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, phone, bio, password })
+                });
+                const data = await res.json();
+                msgEl.classList.remove('hidden');
+                if(data.status === 'success') {
+                    msgEl.className = "text-xs font-mono text-emerald-400";
+                    msgEl.innerText = "✓ " + data.message;
+                    setTimeout(() => { location.reload(); }, 1200);
+                } else {
+                    msgEl.className = "text-xs font-mono text-rose-400";
+                    msgEl.innerText = "✕ " + data.message;
+                }
+            } catch (err) {
+                msgEl.classList.remove('hidden');
+                msgEl.className = "text-xs font-mono text-rose-400";
+                msgEl.innerText = "✕ Error updating profile.";
+            }
+        }
+    </script>
+</body>
+</html>
